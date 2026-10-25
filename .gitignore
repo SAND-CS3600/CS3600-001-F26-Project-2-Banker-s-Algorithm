@@ -1,0 +1,11 @@
+# Compiled Java classes
+*.class
+
+# Compiled C executable
+posix/banker
+
+# macOS folder metadata
+.DS_Store
+
+# Git bundles created for submission
+*.bundle
