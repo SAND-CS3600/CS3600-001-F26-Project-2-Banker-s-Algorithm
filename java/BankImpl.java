@@ -215,11 +215,23 @@ public class BankImpl implements BankInterface {
             return false;
         }
 
-        // TODO:
-        // 4. Check whether the resulting state is safe.
-        // 5. Update the bank if the request is approved.
+        // 4. Check whether the resulting state is safe
+        if (!isSafeState(customerNum, request)) {
+            System.out.println("Denied: unsafe state, these customers could not finish: "
+                    + stuckCustomers());
+            return false;
+        }
 
-        return false;
+        // 5. Update the bank (the request is approved). Allocation and Need
+        // change by the same amount, so Need = Maximum - Allocation still holds.
+        for (int j = 0; j < numberOfResources; j++) {
+            available[j] -= request[j];
+            allocation[customerNum][j] += request[j];
+            need[customerNum][j] -= request[j];
+        }
+
+        System.out.println("Approved (safe sequence: " + formatSequence() + ")");
+        return true;
     }
 
     /**
@@ -268,5 +280,38 @@ public class BankImpl implements BankInterface {
             copy[i] = source[i].clone();
         }
         return copy;
+    }
+
+    /**
+     * Formats lastSafeSequence as "C1 -> C2 -> C3 -> C4 -> C0".
+     * Only meaningful right after isSafeState().
+     */
+    private String formatSequence() {
+        StringBuilder text = new StringBuilder();
+        for (int k = 0; k < lastSafeSequence.size(); k++) {
+            if (k > 0) {
+                text.append(" -> ");
+            }
+            text.append("C").append(lastSafeSequence.get(k));
+        }
+        return text.toString();
+    }
+
+    /**
+     * Lists the customers that could not finish in the last safety
+     * check, for example "C0 C1 C3". Only meaningful right after
+     * isSafeState() returns false.
+     */
+    private String stuckCustomers() {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < numberOfCustomers; i++) {
+            if (!lastSafeSequence.contains(i)) {
+                if (text.length() > 0) {
+                    text.append(" ");
+                }
+                text.append("C").append(i);
+            }
+        }
+        return text.toString();
     }
 }
