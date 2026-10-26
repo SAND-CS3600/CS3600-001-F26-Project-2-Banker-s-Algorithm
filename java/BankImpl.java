@@ -179,10 +179,43 @@ public class BankImpl implements BankInterface {
     public synchronized boolean requestResources(
             int customerNum, int[] request) {
 
+        // 1. Validate the request, so invalid input cannot corrupt the bank
+        if (customerNum < 0 || customerNum >= numberOfCustomers) {
+            System.out.println("Denied: invalid customer number " + customerNum
+                    + " (must be 0-" + (numberOfCustomers - 1) + ")");
+            return false;
+        }
+        if (request == null || request.length != numberOfResources) {
+            System.out.println("Denied: request must have exactly "
+                    + numberOfResources + " values");
+            return false;
+        }
+        for (int j = 0; j < numberOfResources; j++) {
+            if (request[j] < 0) {
+                System.out.println("Denied: negative request for R" + j);
+                return false;
+            }
+        }
+
+        // 2. Check whether the request exceeds Need
+        int needIndex = firstExceedingIndex(request, need[customerNum]);
+        if (needIndex != -1) {
+            System.out.println("Denied: request exceeds remaining need for R" + needIndex
+                    + " (requested " + request[needIndex]
+                    + ", need " + need[customerNum][needIndex] + ")");
+            return false;
+        }
+
+        // 3. Check whether the resources are available
+        int availableIndex = firstExceedingIndex(request, available);
+        if (availableIndex != -1) {
+            System.out.println("Denied: not enough R" + availableIndex + " available"
+                    + " (requested " + request[availableIndex]
+                    + ", available " + available[availableIndex] + ")");
+            return false;
+        }
+
         // TODO:
-        // 1. Validate the request.
-        // 2. Check whether the request exceeds Need.
-        // 3. Check whether the resources are available.
         // 4. Check whether the resulting state is safe.
         // 5. Update the bank if the request is approved.
 
