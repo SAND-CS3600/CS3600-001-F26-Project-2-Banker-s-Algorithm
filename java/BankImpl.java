@@ -138,4 +138,41 @@ public class BankImpl implements BankInterface {
         // TODO:
         // Validate and release the resources.
     }
+
+    // ---------------------------------------------------------------
+    // Helper methods
+    // ---------------------------------------------------------------
+
+    /**
+     * Returns the first index j where a[j] > b[j], or -1 if
+     * a[j] <= b[j] for every j. Both arrays must be the same length.
+     */
+    private static int firstExceedingIndex(int[] a, int[] b) {
+        for (int j = 0; j < a.length; j++) {
+            if (a[j] > b[j]) {
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns true if a[j] <= b[j] for every j (a <= b as vectors).
+     * Both arrays must be the same length.
+     */
+    private static boolean lessOrEqual(int[] a, int[] b) {
+        return firstExceedingIndex(a, b) == -1;
+    }
+
+    /**
+     * Returns a deep copy of a 2D array. clone() on a 2D array copies
+     * only the outer array and shares the rows, so each row is cloned.
+     */
+    private static int[][] copyMatrix(int[][] source) {
+        int[][] copy = new int[source.length][];
+        for (int i = 0; i < source.length; i++) {
+            copy[i] = source[i].clone();
+        }
+        return copy;
+    }
 }
