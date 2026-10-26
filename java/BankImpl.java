@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class BankImpl implements BankInterface {
 
     private int numberOfCustomers;
@@ -8,6 +11,19 @@ public class BankImpl implements BankInterface {
     private int[][] maximum;
     private int[][] allocation;
     private int[][] need;
+
+    /*
+     * Order in which customers finished during the most recent run of
+     * isSafeState(). If the state was safe, it holds every customer
+     * (the safe sequence). If unsafe, it holds only the customers that
+     * could finish, so the missing ones are the customers that are stuck.
+     *
+     * Diagnostic only: not part of the bank's state, and never used to
+     * make a decision. It is rewritten by every safety check, so it must
+     * only be read right after isSafeState() within the same
+     * synchronized call.
+     */
+    private List<Integer> lastSafeSequence = new ArrayList<>();
 
     /**
      * Creates a new bank with the specified resources.
@@ -99,13 +115,58 @@ public class BankImpl implements BankInterface {
     /**
      * Determines whether the system would remain
      * in a safe state if the request were granted.
+     *
+     * Works only on temporary copies, so the bank's real state is never
+     * changed here. Records the order customers finished in
+     * lastSafeSequence.
+     *
+     * Precondition: the request has already been validated by
+     * requestResources() (no negative values, request <= Need,
+     * request <= Available). Must only be called from a synchronized
+     * method, since it rewrites lastSafeSequence.
      */
     private boolean isSafeState(int customerNum, int[] request) {
 
-        // TODO:
-        // Implement the Banker's Safety Algorithm.
+        // Step 1 - Create a temporary state (deep copies of the real state)
+        int[] work = available.clone();
+        int[][] tempAllocation = copyMatrix(allocation);
+        int[][] tempNeed = copyMatrix(need);
 
-        return false;
+        // Step 2 - Simulate granting the request in the temporary state
+        for (int j = 0; j < numberOfResources; j++) {
+            work[j] -= request[j];
+            tempAllocation[customerNum][j] += request[j];
+            tempNeed[customerNum][j] -= request[j];
+        }
+
+        // Step 3 - Track customer completion: no customer has finished yet
+        boolean[] finish = new boolean[numberOfCustomers];
+        lastSafeSequence.clear();
+
+        // Steps 4-6 - Search for a customer whose remaining Need fits in
+        // Work, let it finish and return its resources, and keep
+        // searching until a full pass finishes nobody
+        boolean progressMade = true;
+        while (progressMade) {
+            progressMade = false;
+
+            for (int i = 0; i < numberOfCustomers; i++) {
+                if (!finish[i] && lessOrEqual(tempNeed[i], work)) {
+
+                    // Step 5 - Customer i completes and returns everything it holds
+                    for (int j = 0; j < numberOfResources; j++) {
+                        work[j] += tempAllocation[i][j];
+                    }
+                    finish[i] = true;
+                    lastSafeSequence.add(i);
+                    progressMade = true;
+                }
+            }
+        }
+
+        // Step 7 - Safe only if every customer was able to finish
+        // (each customer is added to the sequence exactly once, when it finishes)
+        return lastSafeSequence.size() == numberOfCustomers;
     }
 
     /**
