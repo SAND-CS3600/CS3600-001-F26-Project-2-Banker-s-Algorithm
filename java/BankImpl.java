@@ -14,22 +14,72 @@ public class BankImpl implements BankInterface {
      */
     public BankImpl(int numberOfCustomers, int[] resources) {
 
-        // TODO:
-        // Initialize numberOfCustomers and numberOfResources.
+        this.numberOfCustomers = numberOfCustomers;
 
-        // TODO:
-        // Initialize available, maximum,
-        // allocation, and need.
+        // The number of resource types comes from the command line,
+        // so it is never hard-coded
+        this.numberOfResources = resources.length;
+
+        // Copy so the bank owns its array; later changes to the
+        // caller's array cannot affect the bank
+        available = resources.clone();
+
+        // Java fills new int arrays with 0, so every customer starts
+        // with an empty allocation. Maximum and Need are filled in
+        // by addCustomer().
+        maximum = new int[numberOfCustomers][numberOfResources];
+        allocation = new int[numberOfCustomers][numberOfResources];
+        need = new int[numberOfCustomers][numberOfResources];
     }
 
     /**
      * Adds a customer and records the customer's
      * maximum resource demand.
+     *
+     * Meant to be called once per customer at startup, before any
+     * requests. Calling it again for a customer that holds resources
+     * would discard that allocation without returning it to Available.
      */
     @Override
     public void addCustomer(int customerNum, int[] maxDemand) {
 
-        // TODO
+        // Reject invalid input without changing the bank
+        if (customerNum < 0 || customerNum >= numberOfCustomers) {
+            System.out.println("Error: invalid customer number " + customerNum
+                    + " (must be 0-" + (numberOfCustomers - 1) + ")");
+            return;
+        }
+        if (maxDemand == null || maxDemand.length != numberOfResources) {
+            System.out.println("Error: customer " + customerNum
+                    + " must have exactly " + numberOfResources + " maximum values");
+            return;
+        }
+        for (int j = 0; j < numberOfResources; j++) {
+            if (maxDemand[j] < 0) {
+                System.out.println("Error: customer " + customerNum
+                        + " has a negative maximum for R" + j);
+                return;
+            }
+        }
+
+        // Separate copies, so changing Need later never changes Maximum
+        maximum[customerNum] = maxDemand.clone();
+        need[customerNum] = maxDemand.clone();
+
+        // A new customer holds nothing, so Need = Maximum - 0 = Maximum
+        allocation[customerNum] = new int[numberOfResources];
+
+        // Warn if this customer could need more of a resource than the
+        // whole system has, since it could then never finish.
+        // At startup, Available still equals the system total.
+        for (int j = 0; j < numberOfResources; j++) {
+            if (maxDemand[j] > available[j]) {
+                System.out.println("Warning: customer " + customerNum
+                        + " maximum for R" + j + " (" + maxDemand[j]
+                        + ") exceeds total R" + j + " in the system ("
+                        + available[j] + "); this customer can never finish");
+            }
+        }
     }
 
     /**
