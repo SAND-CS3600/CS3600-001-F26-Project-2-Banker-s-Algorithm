@@ -9,3 +9,6 @@ posix/banker
 
 # Git bundles created for submission
 *.bundle
+
+# Test run outputs from java/tests/run_tests.sh
+java/tests/output/
