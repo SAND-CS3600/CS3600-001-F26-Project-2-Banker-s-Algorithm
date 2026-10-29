@@ -108,7 +108,7 @@ public class BankImpl implements BankInterface{
      */
     @Override
     public synchronized void getState() {
-	System.out.printSystem.out.println("Available:");
+		System.out.println("Available:");
         System.out.println("  " + formatRow(available));
 
         System.out.println("Maximum:");
