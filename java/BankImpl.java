@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class BankImpl implements BankInterface {
+public class BankImpl implements BankInterface{
 
     private int numberOfCustomers;
     private int numberOfResources;
@@ -107,9 +107,18 @@ public class BankImpl implements BankInterface {
      * Need
      */
     @Override
-    public void getState() {
+    public synchronized void getState() {
+		System.out.println("Available:");
+        System.out.println("  " + formatRow(available));
 
-        // TODO
+        System.out.println("Maximum:");
+        printMatrix(maximum);
+
+        System.out.println("Allocation:");
+        printMatrix(allocation);
+
+        System.out.println("Need:");
+        printMatrix(need);
     }
 
     /**
@@ -240,9 +249,41 @@ public class BankImpl implements BankInterface {
     @Override
     public synchronized void releaseResources(
             int customerNum, int[] release) {
+        // Validate the release so invalid input cannot corrupt the bank
+        if (customerNum < 0 || customerNum >= numberOfCustomers) {
+            System.out.println("Denied: invalid customer number " + customerNum
+                    + " (must be 0-" + (numberOfCustomers - 1) + ")");
+            return;
+        }
+        if (release == null || release.length != numberOfResources) {
+            System.out.println("Denied: release must have exactly "
+                    + numberOfResources + " values");
+            return;
+        }
+        for (int j = 0; j < numberOfResources; j++) {
+            if (release[j] < 0) {
+                System.out.println("Denied: negative release for R" + j);
+                return;
+            }
+        }
 
-        // TODO:
-        // Validate and release the resources.
+        // Cannot release more than the customer currently holds
+        int index = firstExceedingIndex(release, allocation[customerNum]);
+        if (index != -1) {
+            System.out.println("Denied: cannot release more than held for R" + index
+                    + " (releasing " + release[index]
+                    + ", holding " + allocation[customerNum][index] + ")");
+            return;
+        }
+
+        // Update all three structures by the same amount
+        for (int j = 0; j < numberOfResources; j++) {
+            available[j] += release[j];
+            allocation[customerNum][j] -= release[j];
+            need[customerNum][j] += release[j];
+        }
+
+        System.out.println("Released");
     }
 
     // ---------------------------------------------------------------
@@ -313,5 +354,22 @@ public class BankImpl implements BankInterface {
             }
         }
         return text.toString();
+    }
+
+    private static String formatRow(int[] row) {
+        StringBuilder text = new StringBuilder();
+        for (int j = 0; j < row.length; j++) {
+            if (j > 0) {
+                text.append(" ");
+            }
+            text.append(row[j]);
+        }
+        return text.toString();
+    }
+
+    private void printMatrix(int[][] matrix) {
+        for (int i = 0; i < numberOfCustomers; i++) {
+            System.out.println("  C" + i + ": " + formatRow(matrix[i]));
+        }
     }
 }

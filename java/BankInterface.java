@@ -1,4 +1,4 @@
-public interface BankInterface {
+public interface BankInterface{
 
     void addCustomer(int customerNum, int[] maxDemand);
 
@@ -6,4 +6,5 @@ public interface BankInterface {
 
     boolean requestResources(int customerNum, int[] request);
     void releaseResources(int customerNum, int[] release);
+
 }
