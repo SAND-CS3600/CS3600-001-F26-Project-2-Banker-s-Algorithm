@@ -4,7 +4,7 @@ public interface BankInterface{
 
     void getState();
 
-    void requestResources(int customerNum, int[] request);
+    boolean requestResources(int customerNum, int[] request);
     void releaseResources(int customerNum, int[] release);
 
 }
